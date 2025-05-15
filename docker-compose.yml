@@ -1,0 +1,40 @@
+services:
+  app:
+    image: quay.io/keycloak/keycloak:26.2.1
+    ports:
+      - "8080:8080" # Adjust port mapping as needed
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-myuser}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-mypassword}
+      - DB_NAME=${POSTGRES_DB:-mydb}
+      - db=postgres
+      - KC_BOOTSTRAP_ADMIN_USERNAME=${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=${KC_BOOTSTRAP_ADMIN_PASSWORD:-admin}
+      - KC_HEALTH_ENABLED=true
+      - KC_LOG_LEVEL=info
+    depends_on:
+      - db
+    command: ["start-dev", "--verbose", 
+      "--http-port", "8080", 
+      "--https-port", "8443", 
+      "--hostname", "keycloak.converteo.me", 
+      "--proxy-headers", "xforwarded",
+      "--hostname-strict", "false",
+      "--http-enabled", "true",
+      "--hostname-debug", "true"
+    ]
+  db:
+    image: postgres:17 # Using the tested version from the documentation
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-myuser}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mypassword}
+      - POSTGRES_DB=${POSTGRES_DB:-mydb}
+    volumes:
+      - db_data:/var/lib/postgresql/data # Persists data across container restarts
+    ports:
+      - "5432:5432" # Expose PostgreSQL port (only if you need external access)
+
+volumes:
+  db_data:
